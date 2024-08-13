@@ -2,7 +2,7 @@
 resource "aws_lambda_function" "lambda-exam" {
   function_name = "dasc-lambda-check-examid"
   handler       = "index.handler"
-  runtime       = "Python 3.9"
+  runtime       = "Python3.9"
 
   role = aws_iam_role.dasc-role-lambda-examid.arn
 
@@ -29,7 +29,7 @@ resource "aws_iam_role" "dasc-role-lambda-examid" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "dasc-role-lambda-examid" {
   role       = aws_iam_role.dasc-role-lambda-examid.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
