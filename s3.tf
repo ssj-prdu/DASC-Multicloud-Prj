@@ -11,7 +11,7 @@ resource "aws_s3_bucket_acl" "dasc-s3-web-acl" {
   bucket = aws_s3_bucket.dasc-s3-web.id
   acl    = "public-read"
 
-  depends_on = [aws_s3_bucket.dasc_s3_web]
+  depends_on = [aws_s3_bucket.dasc-s3-web]
 }
 
 resource "aws_s3_bucket_website_configuration" "dasc-s3-web" {
