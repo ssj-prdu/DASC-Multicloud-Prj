@@ -43,7 +43,7 @@ resource "aws_iam_role_policy_attachment" "lambda_rds_fullaccess_attachment" {
   role       = aws_iam_role.dasc-role-lambda-examid.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonRDSFullAccess"
 }
-################## AmazonAPIFullAccess 정책 부여 ##################
+################## AmazonAPI 정책 부여 ##################
 resource "aws_iam_role_policy_attachment" "lambda_api_admin_attachment" {
   role       = aws_iam_role.dasc-role-lambda-examid.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator"
@@ -52,3 +52,5 @@ resource "aws_iam_role_policy_attachment" "lambda_api_invoke_attachment" {
   role       = aws_iam_role.dasc-role-lambda-examid.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess"
 }
+
+#### VPC 내에 배치 필요

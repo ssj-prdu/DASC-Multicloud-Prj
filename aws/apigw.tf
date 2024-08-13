@@ -38,3 +38,7 @@ resource "aws_api_gateway_integration" "lambda_integration" {
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.lambda-exam.invoke_arn
 }
+
+##### Method responce 없음
+##### Method responce 생성 후에 header name 추가 필요 확인
+##### Deploy 필요
