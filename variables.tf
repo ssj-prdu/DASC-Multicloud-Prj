@@ -26,16 +26,7 @@ variable "instance_type" {
   default = "t2.micro"
 }
 
-variable "key_name" {
-  type    = string
-  default = "id_rsa"
-}
-
-variable "public_key_path" {
-  type    = string
-  default = "~/.ssh/id_rsa.pub"
-}
 
 variable "domain_name" {
-  default = "jhserver.store"
+  default = "chjy0623.shop"
 }
