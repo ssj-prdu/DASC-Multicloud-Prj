@@ -53,7 +53,7 @@ resource "aws_route_table" "dasc-rt-public" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.dasc-igw-main.id
+    gateway_id = aws_internet_gateway.aws-igw-main.id
   }
 
   tags = {
