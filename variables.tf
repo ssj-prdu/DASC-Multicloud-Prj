@@ -30,3 +30,5 @@ variable "instance_type" {
 variable "domain_name" {
   default = "chjy0623.shop"
 }
+
+################# output?? ########
