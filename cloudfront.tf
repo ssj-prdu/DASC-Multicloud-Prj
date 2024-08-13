@@ -13,15 +13,17 @@ resource "aws_s3_bucket_website_configuration" "dasc_s3_web" {
 
 resource "aws_cloudfront_distribution" "dasc_s3_web_distribution" {
   origin {
-    domain_name = aws_s3_bucket.dasc-s3-web.website_endpoint
+    domain_name = dasc-s3-web.s3-website.ap-northeast-2.amazonaws.com
     origin_id   = "S3-dasc-s3-web"
 
     custom_origin_config {
       http_port              = 80
       https_port             = 443
       origin_protocol_policy = "http-only"  # HTTP only로 설정
+      origin_ssl_protocols   = ["TLSv1.2"]  # 필수 속성 추가
     }
   }
+
 
   enabled             = true
   is_ipv6_enabled     = false
