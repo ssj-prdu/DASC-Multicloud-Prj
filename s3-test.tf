@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "bucket_test" {
-  bucket = "jhtest-bucket_test"
+  bucket = "jhtest-bucket-test"
 }
 
 resource "aws_s3_bucket_acl" "bucket_test" {
