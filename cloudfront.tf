@@ -1,7 +1,7 @@
 ################## CloudFront Distribution ##################
 resource "aws_cloudfront_distribution" "dasc-s3-web-distribution" {
   origin {
-    domain_name = ${aws_s3_bucket.dasc_s3_web.bucket_regional_domain_name}
+    domain_name = "${aws_s3_bucket.dasc_s3_web.bucket_regional_domain_name}"
     origin_id   = "S3-dasc-s3-web"
 
     custom_origin_config {
