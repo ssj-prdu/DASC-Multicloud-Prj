@@ -78,7 +78,7 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_route_table_association" "private" {
   count          = length(aws_subnet.dasc-subnet-private)
-  subnet_id      = aws_subnet.dasc-subnet-public[count.index].id
+  subnet_id      = aws_subnet.dasc-subnet-private[count.index].id
   route_table_id = aws_route_table.dasc-rt-private.id
 }
 
