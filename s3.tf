@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "dasc-s3-web" {
   }
 }
 
-resource "aws_s3_bucket_website_configuration" "dasc_s3_web" {
+resource "aws_s3_bucket_website_configuration" "dasc-s3-web" {
   bucket = aws_s3_bucket.dasc-s3-web.id
 
   index_document {
