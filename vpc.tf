@@ -90,14 +90,6 @@ resource "aws_security_group" "rds_sg" {
   description = "Security group for RDS"
   vpc_id      = aws_vpc.dasc-vpc-main.id  # 사용 중인 VPC의 ID로 대체하세요.
 
-  # Lambda에서 RDS로 접근을 허용
-  ingress {
-    from_port   = 3306  # MySQL의 경우 3306, PostgreSQL의 경우 5432
-    to_port     = 3306
-    protocol    = "tcp"
-    security_groups = [aws_security_group.lambda_sg.id]  # Lambda 보안 그룹에서 접근 허용
-  }
-
   # 모든 아웃바운드 트래픽 허용
   egress {
     from_port   = 0
@@ -116,14 +108,6 @@ resource "aws_security_group" "lambda_sg" {
   name        = "dasc-sg-lambda-exam"
   description = "Security group for Lambda examcheck"
   vpc_id      = aws_vpc.dasc-vpc-main.id  # 사용 중인 VPC의 ID로 대체하세요.
-
-  # Lambda에서 RDS로의 접근을 허용
-  egress {
-    from_port       = 3306  # RDS의 포트와 일치해야 합니다.
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.rds_sg.id]
-  }
 
   # Lambda에서 API Gateway로의 접근을 허용 (보통 HTTP/HTTPS)
   egress {
@@ -151,4 +135,24 @@ resource "aws_security_group" "lambda_sg" {
   tags = {
     Name = "dasc-sg-lambda-exam"
   }
+}
+
+# Lambda가 RDS에 접근할 수 있도록 하는 인바운드 규칙
+resource "aws_security_group_rule" "lambda_to_rds" {
+  type              = "ingress"
+  from_port         = 3306  # MySQL의 경우 3306, PostgreSQL의 경우 5432
+  to_port           = 3306
+  protocol          = "tcp"
+  source_security_group_id = aws_security_group.lambda_sg.id
+  security_group_id = aws_security_group.rds_sg.id
+}
+
+# RDS에서 Lambda에 응답할 수 있도록 하는 인바운드 규칙
+resource "aws_security_group_rule" "rds_to_lambda" {
+  type              = "ingress"
+  from_port         = 3306  # MySQL의 경우 3306, PostgreSQL의 경우 5432
+  to_port           = 3306
+  protocol          = "tcp"
+  source_security_group_id = aws_security_group.rds_sg.id
+  security_group_id = aws_security_group.lambda_sg.id
 }
