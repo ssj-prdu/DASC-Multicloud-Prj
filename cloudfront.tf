@@ -1,6 +1,6 @@
 locals {
   s3_origin_id   = "dasc-s3-web-origin"
-  s3_domain_name = "dasc-s3-web.s3-website-dasc-s3-web.amazonaws.com"
+  s3_domain_name = "dasc-s3-web.s3-website.ap-northeast-2.amazonaws.com"
 }
 
 resource "aws_cloudfront_distribution" "cloudfront" {
