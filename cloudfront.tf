@@ -1,19 +1,7 @@
 ################## CloudFront Distribution ##################
-resource "aws_s3_bucket_website_configuration" "dasc_s3_web" {
-  bucket = aws_s3_bucket.dasc-s3-web.id
-
-  index_document {
-    suffix = "main.html"  # 기본 문서 설정
-  }
-
-  error_document {
-    key = "error.html"  # 오류 시 표시할 문서 설정
-  }
-}
-
-resource "aws_cloudfront_distribution" "dasc_s3_web_distribution" {
+resource "aws_cloudfront_distribution" "dasc-s3-web-distribution" {
   origin {
-    domain_name = dasc-s3-web.s3-website.ap-northeast-2.amazonaws.com
+    domain_name = dasc-s3-web.s3.ap-northeast-2.amazonaws.com
     origin_id   = "S3-dasc-s3-web"
 
     custom_origin_config {
