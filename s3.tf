@@ -1,7 +1,6 @@
 ################## Web hosting S3 ###############
 resource "aws_s3_bucket" "static_website" {
   bucket = "dasc-s3-web"
-  acl    = "public-read"
 
   website {
     index_document = "main.html"
@@ -9,7 +8,7 @@ resource "aws_s3_bucket" "static_website" {
   }
 
   tags = {
-    Name        = "jhtest-s3-web"
+    Name = "dasc-s3-web"
   }
 }
 
