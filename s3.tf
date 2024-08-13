@@ -25,3 +25,21 @@ resource "aws_s3_bucket_website_configuration" "exam_site" {
     key = "error.html"  # 오류 시 표시할 문서 설정
   }
 }
+
+
+resource "aws_s3_bucket_policy" "bucket" {
+  bucket = aws_s3_bucket.bucket.id
+
+  policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::dasc-s3-web/*"
+        }
+    ]
+  })
+}
