@@ -2,6 +2,10 @@
 resource "aws_api_gateway_rest_api" "rest_api" {
   name        = "dasc-api-was"
   description = "REST API"
+  
+  endpoint_configuration {
+  types = ["REGIONAL"]
+  }
 }
 
 ################## 리소스 경로 생성 ##################
