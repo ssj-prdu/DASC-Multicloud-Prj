@@ -19,7 +19,7 @@ resource "aws_s3_bucket_website_configuration" "dasc-s3-web" {
     key = "error.html"
   }
 
-  depends_on = [aws_s3_bucket.dasc_s3_web]  # 의존성 명시
+  depends_on = [aws_s3_bucket.dasc-s3-web]  # 의존성 명시
 }
 
 
