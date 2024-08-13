@@ -2,7 +2,7 @@
 resource "aws_api_gateway_rest_api" "rest_api" {
   name        = "dasc-api-was"
   description = "REST API"
-  
+
   endpoint_configuration {
   types = ["REGIONAL"]
   }
@@ -22,7 +22,7 @@ resource "aws_api_gateway_method" "post_method" {
   http_method   = "POST"
   authorization = "NONE"  # 인증 없이 허용
 }
-################## CORS OPTIONS 메서드 설정 ##################
+################## 메서드 설정 (OPTIONS) ##################
 resource "aws_api_gateway_method" "options_method" {
   rest_api_id   = aws_api_gateway_rest_api.rest_api.id
   resource_id   = aws_api_gateway_resource.rest_resource.id
