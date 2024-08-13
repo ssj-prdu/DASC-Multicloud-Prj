@@ -2,7 +2,7 @@
 resource "aws_lambda_function" "lambda-exam" {
   function_name = "dasc-lambda-check-examid"
   handler       = "index.handler"
-  runtime       = "Python3.9"
+  runtime       = "python3.9"
 
   role = aws_iam_role.dasc-role-lambda-examid.arn
 
@@ -35,16 +35,16 @@ resource "aws_iam_role_policy_attachment" "dasc-role-lambda-examid" {
 }
 ################## AmazonEC2FullAccess 정책 부여 ##################
 resource "aws_iam_role_policy_attachment" "lambda_ec2_fullaccess_attachment" {
-  role       = aws_iam_role.dasc_role_lambda_examid.name
+  role       = aws_iam_role.dasc-role-lambda-examid.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
 }
 ################## AmazonRDSFullAccess 정책 부여 ##################
 resource "aws_iam_role_policy_attachment" "lambda_rds_fullaccess_attachment" {
-  role       = aws_iam_role.dasc_role_lambda_examid.name
+  role       = aws_iam_role.dasc-role-lambda-examid.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonRDSFullAccess"
 }
 ################## AmazonAPIFullAccess 정책 부여 ##################
 resource "aws_iam_role_policy_attachment" "lambda_api_fullaccess_attachment" {
-  role       = aws_iam_role.dasc_role_lambda_examid.name
+  role       = aws_iam_role.dasc-role-lambda-examid.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonAPIFullAccess"
 }
