@@ -1,10 +1,11 @@
 ################## Web hosting S3 ###############
-resource "aws_s3_bucket" "static_website" {
-  bucket = "dasc-s3-web"
+resource "aws_s3_bucket" "dasc-s3-web" {
+  bucket = "dasc-s3-web"  # 버킷 이름을 고유하게 설정하세요.
 
+  # 웹 호스팅을 위한 설정
   website {
-    index_document = "main.html"
-    error_document = "error.html"
+    index_document = "index.html"  # 기본 문서
+    error_document = "error.html"  # 오류 시 표시할 문서
   }
 
   tags = {
@@ -12,20 +13,19 @@ resource "aws_s3_bucket" "static_website" {
   }
 }
 
-resource "aws_s3_bucket_policy" "static_website_policy" {
-  bucket = aws_s3_bucket.static_website.bucket
+# S3 버킷 정책 - 퍼블릭으로 읽기 가능하도록 설정
+resource "aws_s3_bucket_policy" "web_hosting_policy" {
+  bucket = aws_s3_bucket.web_hosting_bucket.id
 
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::${aws_s3_bucket.static_website.bucket}/*"
-    }
-  ]
-}
-POLICY
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = "*",
+        Action = "s3:GetObject",
+        Resource = "${aws_s3_bucket.web_hosting_bucket.arn}/*"
+      }
+    ]
+  })
 }
