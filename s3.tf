@@ -31,7 +31,7 @@ resource "aws_s3_bucket_policy" "dasc_s3_web_policy" {
         Effect    = "Allow",
         Principal = "*",
         Action    = "s3:GetObject",
-        Resource  = "arn:aws:s3:::${aws_s3_bucket.dasc_s3_web.bucket}/*"
+        Resource  = "arn:aws:s3:::dasc_s3_web/*"
       }
     ]
   })
