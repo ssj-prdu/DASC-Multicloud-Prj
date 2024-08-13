@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "dasc-s3-tfstate-jh" {
-  bucket = "dasc-s3-tfstate"
+  bucket = "dasc-s3-tfstate-jh"
   acl = "private"
 
   versioning {
