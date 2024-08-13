@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "dasc-s3-web" {
   }
 }
 
-resource "aws_s3_bucket_acl" "dasc-s3-web-acl" {
+resource "aws_s3_bucket_acl" "dasc-s3-web" {
   bucket = aws_s3_bucket.dasc-s3-web.id
   acl    = "public-read"
 
