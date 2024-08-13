@@ -46,5 +46,9 @@ resource "aws_iam_role_policy_attachment" "lambda_rds_fullaccess_attachment" {
 ################## AmazonAPIFullAccess 정책 부여 ##################
 resource "aws_iam_role_policy_attachment" "lambda_api_fullaccess_attachment" {
   role       = aws_iam_role.dasc-role-lambda-examid.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonAPIFullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator"
+}
+resource "aws_iam_role_policy_attachment" "lambda_api_fullaccess_attachment" {
+  role       = aws_iam_role.dasc-role-lambda-examid.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess"
 }
