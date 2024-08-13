@@ -1,9 +1,9 @@
 ######################### VPC #########################
-# vpc = 10.0.0.0/16
-# public-subnet-a = 10.0.0.0/20
-# public-subnet-c = 10.0.16.0/20
-# private-subnet-a = 10.0.32.0/20
-# private-subnet-c = 10.0.48.0/20
+# vpc = 10.0.0.0/20
+# public-subnet-a = 10.0.2.0/23
+# public-subnet-c = 10.0.4.0/23
+# private-subnet-a = 10.0.6.0/23
+# private-subnet-c = 10.0.8.0/23
 
 resource "aws_vpc" "dasc-vpc-main" {
   cidr_block           = var.vpc_cidr
@@ -11,7 +11,7 @@ resource "aws_vpc" "dasc-vpc-main" {
   enable_dns_support   = true
 
   tags = {
-    Name = "Test"
+    Name = "main"
   }
 }
 
@@ -69,6 +69,7 @@ resource "aws_route_table" "dasc-rt-private" {
   }
 }
 
+############# Route Tables association ############
 resource "aws_route_table_association" "public" {
   count          = length(aws_subnet.dasc-subnet-public)
   subnet_id      = aws_subnet.dasc-subnet-public[count.index].id
