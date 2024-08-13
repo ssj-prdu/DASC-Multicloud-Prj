@@ -6,8 +6,8 @@ resource "aws_route53_zone" "dasc_zone" {
   }
 }
 
-resource "aws_route53_record" "www" {
-  zone_id = aws_route53_zone.example_zone.zone_id
+resource "aws_route53_record" "ns" {
+  zone_id = aws_route53_zone.dasc_zone.zone_id
   name    = "ns.chjy0623.shop"  # 생성할 서브 도메인 이름
   type    = "CNAME"
   ttl     = 300
