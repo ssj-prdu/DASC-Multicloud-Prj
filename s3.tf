@@ -4,12 +4,11 @@ resource "aws_s3_bucket" "dasc-s3-web" {
 
   tags = {
     Name        = "dasc-s3-web"
-    Environment = "Production"
   }
 }
 
 resource "aws_s3_bucket_website_configuration" "dasc-s3-web" {
-  bucket = aws_s3_bucket.dasc_s3_web.id
+  bucket = aws_s3_bucket.dasc-s3-web.id
 
   index_document {
     suffix = "index.html"
