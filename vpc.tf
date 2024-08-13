@@ -11,7 +11,7 @@ resource "aws_vpc" "dasc-vpc-main" {
   enable_dns_support   = true
 
   tags = {
-    Name = "main"
+    Name = "dasc-vpc-main"
   }
 }
 
@@ -23,7 +23,7 @@ resource "aws_subnet" "dasc-subnet-public" {
   availability_zone = var.availability_zones[count.index]
 
   tags = {
-    Name = "Public-${count.index + 1}"
+    Name = "dasc-subnet-public-${count.index + 1}"
   }
 }
 
@@ -34,7 +34,7 @@ resource "aws_subnet" "dasc-subnet-private" {
   availability_zone = var.availability_zones[count.index % 2]
 
   tags = {
-    Name = "Private-${count.index + 1}"
+    Name = "dasc-subnet-private-${count.index + 1}"
   }
 }
 
@@ -57,7 +57,7 @@ resource "aws_route_table" "dasc-rt-public" {
   }
 
   tags = {
-    Name = "Public Route Table"
+    Name = "dasc-rt-public"
   }
 }
 
@@ -65,7 +65,7 @@ resource "aws_route_table" "dasc-rt-private" {
   vpc_id = aws_vpc.dasc-vpc-main.id
 
   tags = {
-    Name = "Private Route Table"
+    Name = "dasc-rt-private"
   }
 }
 
@@ -83,4 +83,72 @@ resource "aws_route_table_association" "private" {
 }
 
 
+############# security group ############
+# RDS 보안 그룹
+resource "aws_security_group" "rds_sg" {
+  name        = "dasc-sg-rds"
+  description = "Security group for RDS"
+  vpc_id      = aws_vpc.dasc-vpc-main.id  # 사용 중인 VPC의 ID로 대체하세요.
 
+  # Lambda에서 RDS로 접근을 허용
+  ingress {
+    from_port   = 3306  # MySQL의 경우 3306, PostgreSQL의 경우 5432
+    to_port     = 3306
+    protocol    = "tcp"
+    security_groups = [aws_security_group.lambda_sg.id]  # Lambda 보안 그룹에서 접근 허용
+  }
+
+  # 모든 아웃바운드 트래픽 허용
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "dasc-sg-rds"
+  }
+}
+
+# Lambda 보안 그룹
+resource "aws_security_group" "lambda_sg" {
+  name        = "dasc-sg-lambda-exam"
+  description = "Security group for Lambda examcheck"
+  vpc_id      = aws_vpc.dasc-vpc-main.id  # 사용 중인 VPC의 ID로 대체하세요.
+
+  # Lambda에서 RDS로의 접근을 허용
+  egress {
+    from_port       = 3306  # RDS의 포트와 일치해야 합니다.
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.rds_sg.id]
+  }
+
+  # Lambda에서 API Gateway로의 접근을 허용 (보통 HTTP/HTTPS)
+  egress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Lambda가 외부 API나 서비스에 접근할 수 있도록 모든 아웃바운드 트래픽 허용
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "dasc-sg-lambda-exam"
+  }
+}
