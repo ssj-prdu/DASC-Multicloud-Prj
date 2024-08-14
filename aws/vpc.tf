@@ -103,8 +103,8 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-######## Exam check Lambda 보안 그룹 #########
-resource "aws_security_group" "lambda_sg" {
+######## Exam check Lambda 보안 그룹 ########
+resource "aws_security_group" "dasc-sg-lambda-exam" {
   name        = "dasc-sg-lambda-exam"
   description = "Security group for Lambda examcheck"
   vpc_id      = aws_vpc.dasc-vpc-main.id  # 사용 중인 VPC의 ID로 대체하세요.
@@ -140,22 +140,57 @@ resource "aws_security_group" "lambda_sg" {
   }
 }
 
-# Lambda가 RDS에 접근할 수 있도록 하는 인바운드 규칙
-resource "aws_security_group_rule" "lambda_to_rds" {
-  type              = "ingress"
-  from_port         = 3306  # MySQL의 경우 3306, PostgreSQL의 경우 5432
-  to_port           = 3306
-  protocol          = "tcp"
-  source_security_group_id = aws_security_group.lambda_sg.id
-  security_group_id = aws_security_group.rds_sg.id
-}
+# # Lambda가 RDS에 접근할 수 있도록 하는 인바운드 규칙
+# resource "aws_security_group_rule" "lambda-sg-rds" {
+#   type              = "ingress"
+#   from_port         = 3306  # MySQL의 경우 3306, PostgreSQL의 경우 5432
+#   to_port           = 3306
+#   protocol          = "tcp"
+#   source_security_group_id = aws_security_group.lambda_sg.id
+#   security_group_id = aws_security_group.rds_sg.id
+# }
 
-# RDS에서 Lambda에 응답할 수 있도록 하는 인바운드 규칙
-resource "aws_security_group_rule" "rds_to_lambda" {
-  type              = "ingress"
-  from_port         = 3306  # MySQL의 경우 3306, PostgreSQL의 경우 5432
-  to_port           = 3306
-  protocol          = "tcp"
-  source_security_group_id = aws_security_group.rds_sg.id
-  security_group_id = aws_security_group.lambda_sg.id
+
+
+#########
+resource "aws_security_group" "dasc-sg-rds" {
+  name        = "dasc-sg-rds"
+  description = "Security group for rds"
+  vpc_id      = aws_vpc.dasc-vpc-main.id # VPC ID를 실제 환경에 맞게 변경하세요
+
+  ingress {
+    description      = "Allow MySQL inbound traffic from Lambda Security Group"
+    from_port        = 3306
+    to_port          = 3306
+    protocol         = "tcp"
+    security_groups  = [aws_security_group.dasc-sg-lambda-exam.id]
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    Name = "dasc-sg-rds"
+  }
+
+  # ingress {
+  #   description = "Allow MySQL inbound traffic"
+  #   from_port   = 3306
+  #   to_port     = 3306
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"] # 모든 IP에서 접근 허용, 보안상 특정 IP로 제한 권장
+  # }
+
+  # egress {
+  #   description = "Allow all outbound traffic"
+  #   from_port   = 0
+  #   to_port     = 0
+  #   protocol    = "-1"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
+
 }
