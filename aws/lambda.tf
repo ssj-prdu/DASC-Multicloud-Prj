@@ -12,7 +12,7 @@ resource "aws_lambda_function" "lambda-exam" {
 
   vpc_config {
     subnet_ids         = aws_subnet.dasc-subnet-private[*].id
-    security_group_ids = [aws_security_group.dasc-lambda-sg.id]  # 적절한 보안 그룹 ID 사용
+    security_group_ids = [aws_security_group.lambda_sg.id]  # 적절한 보안 그룹 ID 사용
   }
 }
 
