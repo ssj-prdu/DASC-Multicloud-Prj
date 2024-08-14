@@ -4,7 +4,7 @@ resource "aws_api_gateway_rest_api" "rest_api" {
   description = "REST API"
 
   endpoint_configuration {
-  types = ["REGIONAL"]
+    types = ["REGIONAL"]
   }
 }
 
@@ -22,6 +22,20 @@ resource "aws_api_gateway_method" "post_method" {
   http_method   = "POST"
   authorization = "NONE"  # 인증 없이 허용
 }
+################## Method Response (POST) ##################
+resource "aws_api_gateway_method_response" "post_method_response" {
+  rest_api_id = aws_api_gateway_method.post_method.rest_api_id
+  resource_id = aws_api_gateway_method.post_method.resource_id
+  http_method = aws_api_gateway_method.post_method.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
 ################## 메서드 설정 (OPTIONS) ##################
 resource "aws_api_gateway_method" "options_method" {
   rest_api_id   = aws_api_gateway_rest_api.rest_api.id
@@ -29,6 +43,24 @@ resource "aws_api_gateway_method" "options_method" {
   http_method   = "OPTIONS"
   authorization = "NONE"
 }
+################## Method Response (OPTIONS) ##################
+resource "aws_api_gateway_method_response" "options_method_response" {
+  rest_api_id = aws_api_gateway_method.options_method.rest_api_id
+  resource_id = aws_api_gateway_method.options_method.resource_id
+  http_method = aws_api_gateway_method.options_method.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
 ################## Lambda 통합 설정 ##################
 resource "aws_api_gateway_integration" "lambda_integration" {
   rest_api_id             = aws_api_gateway_rest_api.rest_api.id
@@ -39,6 +71,42 @@ resource "aws_api_gateway_integration" "lambda_integration" {
   uri                     = aws_lambda_function.lambda-exam.invoke_arn
 }
 
-##### Method responce 없음
-##### Method responce 생성 후에 header name 추가 필요 확인
-##### Deploy 필요
+################## Lambda Integration Response (POST) ##################
+resource "aws_api_gateway_integration_response" "post_integration_response" {
+  rest_api_id = aws_api_gateway_integration.lambda_integration.rest_api_id
+  resource_id = aws_api_gateway_integration.lambda_integration.resource_id
+  http_method = aws_api_gateway_integration.lambda_integration.http_method
+  status_code = aws_api_gateway_method_response.post_method_response.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+################## Lambda Integration Response (OPTIONS) ##################
+resource "aws_api_gateway_integration_response" "options_integration_response" {
+  rest_api_id = aws_api_gateway_integration.lambda_integration.rest_api_id
+  resource_id = aws_api_gateway_integration.lambda_integration.resource_id
+  http_method = aws_api_gateway_method.options_method.http_method
+  status_code = aws_api_gateway_method_response.options_method_response.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+################## API Gateway 배포 ##################
+resource "aws_api_gateway_deployment" "api_deployment" {
+  depends_on = [
+    aws_api_gateway_integration.lambda_integration,
+    aws_api_gateway_method.post_method,
+    aws_api_gateway_method.options_method
+  ]
+
+  rest_api_id = aws_api_gateway_rest_api.rest_api.id
+  stage_name  = "prod"  # 프로덕션 환경 배포
+}
