@@ -84,25 +84,6 @@ resource "aws_route_table_association" "private" {
 
 
 ############# security group ############
-####### RDS 보안 그룹 #######
-resource "aws_security_group" "rds_sg" {
-  name        = "dasc-sg-rds"
-  description = "Security group for RDS"
-  vpc_id      = aws_vpc.dasc-vpc-main.id  # 사용 중인 VPC의 ID로 대체하세요.
-
-  # 모든 아웃바운드 트래픽 허용
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "dasc-sg-rds"
-  }
-}
-
 ######## Exam check Lambda 보안 그룹 ########
 resource "aws_security_group" "dasc-sg-lambda-exam" {
   name        = "dasc-sg-lambda-exam"
@@ -140,19 +121,7 @@ resource "aws_security_group" "dasc-sg-lambda-exam" {
   }
 }
 
-# # Lambda가 RDS에 접근할 수 있도록 하는 인바운드 규칙
-# resource "aws_security_group_rule" "lambda-sg-rds" {
-#   type              = "ingress"
-#   from_port         = 3306  # MySQL의 경우 3306, PostgreSQL의 경우 5432
-#   to_port           = 3306
-#   protocol          = "tcp"
-#   source_security_group_id = aws_security_group.lambda_sg.id
-#   security_group_id = aws_security_group.rds_sg.id
-# }
-
-
-
-#########
+######### RDS 보안그룹 ##########
 resource "aws_security_group" "dasc-sg-rds" {
   name        = "dasc-sg-rds"
   description = "Security group for rds"
@@ -176,21 +145,5 @@ resource "aws_security_group" "dasc-sg-rds" {
   tags = {
     Name = "dasc-sg-rds"
   }
-
-  # ingress {
-  #   description = "Allow MySQL inbound traffic"
-  #   from_port   = 3306
-  #   to_port     = 3306
-  #   protocol    = "tcp"
-  #   cidr_blocks = ["0.0.0.0/0"] # 모든 IP에서 접근 허용, 보안상 특정 IP로 제한 권장
-  # }
-
-  # egress {
-  #   description = "Allow all outbound traffic"
-  #   from_port   = 0
-  #   to_port     = 0
-  #   protocol    = "-1"
-  #   cidr_blocks = ["0.0.0.0/0"]
-  # }
 
 }
