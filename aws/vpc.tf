@@ -103,28 +103,31 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-# Lambda 보안 그룹
+######## Exam check Lambda 보안 그룹 #########
 resource "aws_security_group" "lambda_sg" {
   name        = "dasc-sg-lambda-exam"
   description = "Security group for Lambda examcheck"
   vpc_id      = aws_vpc.dasc-vpc-main.id  # 사용 중인 VPC의 ID로 대체하세요.
-
-  # Lambda에서 API Gateway로의 접근을 허용 (보통 HTTP/HTTPS)
-  egress {
+##### 인바운드 규칙 (Ingress) #####
+  ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  egress {
+  ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  # Lambda가 외부 API나 서비스에 접근할 수 있도록 모든 아웃바운드 트래픽 허용
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  # 모든 포트에 대한 아웃바운드를 허용하는 기본 규칙 유지 (필요 시 제거 가능)
   egress {
     from_port   = 0
     to_port     = 0
