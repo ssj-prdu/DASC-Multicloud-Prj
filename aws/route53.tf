@@ -17,7 +17,7 @@ resource "aws_route53_record" "ns" {
 # ############ www 레코드 생성 ############
 # resource "aws_route53_record" "www" {
 #   zone_id = aws_route53_zone.dasc_zone.zone_id
-#   name    = www.var.domain_name  # 생성할 서브 도메인 이름
+#   name    = www.${var.domain_name}  # 생성할 서브 도메인 이름
 #   type    = "A"
 #   ttl     = 300
 #   records = [ "GCP LB IP" ]
