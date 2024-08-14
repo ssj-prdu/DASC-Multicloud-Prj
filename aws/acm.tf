@@ -28,6 +28,7 @@ resource "aws_route53_record" "cert_record" {
   ttl     = 300
   records = [each.value.record]
 
+  depends_on = [ aws_route53_zone.dasc_zone ]
 }
 
 resource "aws_acm_certificate_validation" "dasc_cert_validation" {

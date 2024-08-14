@@ -7,7 +7,7 @@ resource "aws_route53_zone" "dasc_zone" {
   }
 }
 ############ ns 레코드 생성 ############
-resource "aws_route53_record" "ns" {
+resource "aws_route53_record" "CNAME" {
   zone_id = aws_route53_zone.dasc_zone.zone_id
   name    = "ns.${var.domain_name}"  # 생성할 서브 도메인 이름
   type    = "CNAME"
@@ -15,9 +15,9 @@ resource "aws_route53_record" "ns" {
   records = [ aws_cloudfront_distribution.cloudfront.domain_name ]
 }
 # ############ www 레코드 생성 ############
-# resource "aws_route53_record" "www" {
+# resource "aws_route53_record" "A" {
 #   zone_id = aws_route53_zone.dasc_zone.zone_id
-#   name    = www.${var.domain_name}  # 생성할 서브 도메인 이름
+#   name    = "www.${var.domain_name}"  # 생성할 서브 도메인 이름
 #   type    = "A"
 #   ttl     = 300
 #   records = [ "GCP LB IP" ]
