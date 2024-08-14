@@ -3,7 +3,6 @@ resource "aws_db_instance" "dasc_rds" {
   engine               = "mysql"
   engine_version       = "8.0"
   instance_class       = "db.t2.micro"
-  name                 = "dasc-db"
   username             = "admin"
   password             = var.db_password
   parameter_group_name = "default.mysql8.0"
