@@ -84,7 +84,7 @@ resource "aws_route_table_association" "private" {
 
 
 ############# security group ############
-# RDS 보안 그룹
+####### RDS 보안 그룹 #######
 resource "aws_security_group" "rds_sg" {
   name        = "dasc-sg-rds"
   description = "Security group for RDS"

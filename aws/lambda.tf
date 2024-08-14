@@ -9,6 +9,11 @@ resource "aws_lambda_function" "lambda-exam" {
   filename = "pymysql_layer.zip"  # 이 파일은 Lambda 함수 코드가 포함된 zip 파일입니다.
 
   source_code_hash = filebase64sha256("pymysql_layer.zip")
+
+  vpc_config {
+    subnet_ids         = aws_subnet.dasc-subnet-private[*].id
+    security_group_ids = [aws_security_group.dasc-lambda-sg.id]  # 적절한 보안 그룹 ID 사용
+  }
 }
 
 ################## Lambda 역할 설정 ##################
