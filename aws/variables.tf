@@ -31,6 +31,10 @@ variable "domain_name" {
   default = "jhserver.store"
 }
 
-
+variable "db_password" {
+  description = "The password for the RDS instance"
+  type        = string
+  sensitive   = true
+}
 
 ################# output?? ########
