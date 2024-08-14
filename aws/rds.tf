@@ -17,7 +17,7 @@ resource "aws_db_instance" "dasc_rds" {
   username             = "admin"
   password             = "password123"
   db_subnet_group_name = aws_db_subnet_group.dasc_db_subnet_group.name
-  vpc_security_group_ids = [aws_security_group.mysql_sg.id]  # 관련된 보안 그룹 참조
+  vpc_security_group_ids = [aws_security_group.dasc-sg-rds.id]  # 관련된 보안 그룹 참조
   skip_final_snapshot  = true
 
   tags = {
