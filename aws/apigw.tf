@@ -22,6 +22,7 @@ resource "aws_api_gateway_method" "post_method" {
   http_method   = "POST"
   authorization = "NONE"  # 인증 없이 허용
 }
+
 ################## Method Response (POST) ##################
 resource "aws_api_gateway_method_response" "post_method_response" {
   rest_api_id = aws_api_gateway_method.post_method.rest_api_id
@@ -43,6 +44,7 @@ resource "aws_api_gateway_method" "options_method" {
   http_method   = "OPTIONS"
   authorization = "NONE"
 }
+
 ################## Method Response (OPTIONS) ##################
 resource "aws_api_gateway_method_response" "options_method_response" {
   rest_api_id = aws_api_gateway_method.options_method.rest_api_id
@@ -61,7 +63,7 @@ resource "aws_api_gateway_method_response" "options_method_response" {
   }
 }
 
-################## Lambda 통합 설정 ##################
+################## Lambda 통합 설정 (POST) ##################
 resource "aws_api_gateway_integration" "lambda_integration" {
   rest_api_id             = aws_api_gateway_rest_api.rest_api.id
   resource_id             = aws_api_gateway_resource.rest_resource.id
@@ -85,11 +87,23 @@ resource "aws_api_gateway_integration_response" "post_integration_response" {
   }
 }
 
-################## Lambda Integration Response (OPTIONS) ##################
-resource "aws_api_gateway_integration_response" "options_integration_response" {
-  rest_api_id = aws_api_gateway_integration.lambda_integration.rest_api_id
-  resource_id = aws_api_gateway_integration.lambda_integration.resource_id
+################## MOCK Integration 설정 (OPTIONS) ##################
+resource "aws_api_gateway_integration" "options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.rest_api.id
+  resource_id = aws_api_gateway_resource.rest_resource.id
   http_method = aws_api_gateway_method.options_method.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+################## MOCK Integration Response (OPTIONS) ##################
+resource "aws_api_gateway_integration_response" "options_integration_response" {
+  rest_api_id = aws_api_gateway_integration.options_integration.rest_api_id
+  resource_id = aws_api_gateway_integration.options_integration.resource_id
+  http_method = aws_api_gateway_integration.options_integration.http_method
   status_code = aws_api_gateway_method_response.options_method_response.status_code
 
   response_parameters = {
@@ -103,8 +117,7 @@ resource "aws_api_gateway_integration_response" "options_integration_response" {
 resource "aws_api_gateway_deployment" "api_deployment" {
   depends_on = [
     aws_api_gateway_integration.lambda_integration,
-    aws_api_gateway_method.post_method,
-    aws_api_gateway_method.options_method
+    aws_api_gateway_integration.options_integration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.rest_api.id
