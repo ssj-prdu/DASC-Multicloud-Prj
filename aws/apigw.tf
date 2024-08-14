@@ -35,6 +35,10 @@ resource "aws_api_gateway_method_response" "post_method_response" {
     "method.response.header.Access-Control-Allow-Methods" = true
     "method.response.header.Access-Control-Allow-Origin"  = true
   }
+  # POST 메서드 응답에 대한 Content type 및 Model 설정 추가
+  response_models = {
+    "application/json" = "Empty"
+  }
 }
 
 ################## 메서드 설정 (OPTIONS) ##################
