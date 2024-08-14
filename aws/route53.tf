@@ -1,15 +1,24 @@
-# resource "aws_route53_zone" "dasc_zone" {
-#   name = "chjy0623.shop"  # 본인의 도메인 이름으로 변경하세요.
+############# route 53 생성 ##############
+resource "aws_route53_zone" "dasc_zone" {
+  name = var.domain_name  # 본인의 도메인 이름으로 변경하세요.
 
-#   tags = {
-#     Name = "dasc-route53"
-#   }
-# }
-
-# resource "aws_route53_record" "ns" {
+  tags = {
+    Name = "dasc-route53"
+  }
+}
+############ ns 레코드 생성 ############
+resource "aws_route53_record" "ns" {
+  zone_id = aws_route53_zone.dasc_zone.zone_id
+  name    = ns.var.domain_name  # 생성할 서브 도메인 이름
+  type    = "CNAME"
+  ttl     = 300
+  records = [ aws_cloudfront_distribution.cloudfront.domain_name ]
+}
+# ############ www 레코드 생성 ############
+# resource "aws_route53_record" "www" {
 #   zone_id = aws_route53_zone.dasc_zone.zone_id
-#   name    = "ns.chjy0623.shop"  # 생성할 서브 도메인 이름
-#   type    = "CNAME"
+#   name    = www.var.domain_name  # 생성할 서브 도메인 이름
+#   type    = "A"
 #   ttl     = 300
-#   records = [ aws_cloudfront_distribution.cloudfront.domain_name ]
+#   records = [ "GCP LB IP" ]
 # }
