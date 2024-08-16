@@ -14,6 +14,7 @@ resource "aws_route53_record" "ns" {
   ttl     = 300
   records = [ aws_cloudfront_distribution.cloudfront.domain_name ]
 }
+
 # ############ www 레코드 생성 ############
 # resource "aws_route53_record" "A" {
 #   zone_id = aws_route53_zone.dasc_zone.zone_id

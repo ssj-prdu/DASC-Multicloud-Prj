@@ -39,7 +39,6 @@ resource "aws_db_instance" "dasc_rds" {
   }
 }
 
-
 resource "aws_iam_role" "rds_monitoring_role" {
   name = "rds-monitoring-role"
 
@@ -63,4 +62,61 @@ EOF
 resource "aws_iam_role_policy_attachment" "rds_monitoring_role_policy" {
   role       = aws_iam_role.rds_monitoring_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+}
+
+
+################ 테이블 생성 ##############
+resource "null_resource" "setup_db" {
+  provisioner "local-exec" {
+    command = <<EOT
+mysql --host=${aws_db_instance.dasc_rds.endpoint} --user=admin --password=${var.db_password} --database=exam_system <<EOF
+CREATE TABLE User (
+    email VARCHAR(255) PRIMARY KEY,
+    user_name VARCHAR(100) NOT NULL,
+    user_password VARCHAR(255) NOT NULL,
+    subscription_date DATE NOT NULL
+);
+
+CREATE TABLE Subject (
+    exam_code CHAR(12) PRIMARY KEY,
+    subject_name VARCHAR(100) NOT NULL,
+    application_start DATE NOT NULL,
+    application_end DATE NOT NULL,
+    test_date DATE NOT NULL
+);
+
+INSERT INTO Subject (exam_code, subject_name, application_start, application_end, test_date) VALUES
+    ('saa-c03', 'AWS Certified Solutions Architect', '2024-08-01', '2024-08-03', '2024-09-01'),
+    ('sap-c02', 'AWS Certified Solutions Architect - Professional', '2024-08-04', '2024-08-06', '2024-09-07');
+
+CREATE TABLE Exam_q (
+    question_id VARCHAR(12) PRIMARY KEY,
+    exam_code CHAR(12) NOT NULL,
+    content VARCHAR(800) NOT NULL,
+    A VARCHAR(500) NOT NULL,
+    B VARCHAR(500) NOT NULL,
+    C VARCHAR(500) NOT NULL,
+    D VARCHAR(500) NOT NULL,
+    answer CHAR(1) NOT NULL,
+    FOREIGN KEY (exam_code) REFERENCES Subject(exam_code)
+);
+
+CREATE TABLE Candidate (
+    exam_id INT(10) AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    user_name VARCHAR(100) NOT NULL,
+    exam_code CHAR(12),
+    score INT,
+    Pass_Fail ENUM('합격', '불합격'),
+    test_date DATE NOT NULL,
+    FOREIGN KEY (email) REFERENCES User(email),
+    FOREIGN KEY (exam_code) REFERENCES Subject(exam_code)
+);
+
+ALTER TABLE Candidate AUTO_INCREMENT = 1000000000;
+EOF
+EOT
+  }
+
+  depends_on = [aws_db_instance.dasc_rds]  # RDS 인스턴스 생성 후에 스크립트 실행
 }
