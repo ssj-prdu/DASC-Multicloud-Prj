@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시험 로그인</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        h1 { color: #333; }
+        form { margin-bottom: 20px; }
+        input { width: 200px; padding: 5px; margin-bottom: 10px; }
+        button { padding: 5px 10px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>시험 로그인</h1>
+    <form id="loginForm">
+        <input type="email" id="email" placeholder="이메일" required><br>
+        <input type="text" id="examId" placeholder="시험 ID" required><br>
+        <button type="submit">시험 시작</button>
+    </form>
+
+    <script>
+        const API_ENDPOINT = 'https://0uh2tvtttg.execute-api.ap-northeast-2.amazonaws.com/exam/exam';
+
+        // 세션 초기화
+        sessionStorage.clear();
+
+        // 뒤로가기 방지
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.go(1);
+        };
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const examId = document.getElementById('examId').value;
+            
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        functionName: 'verifyExamEligibility', 
+                        params: { email, exam_id: examId } 
+                    }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                if (data.eligible) {
+                    sessionStorage.setItem('examStartTime', Date.now().toString());
+                    sessionStorage.setItem('examId', examId);
+                    sessionStorage.setItem('email', email);
+                    window.location.href = 'exam.html';
+                } else {
+                    alert('시험 응시 자격이 없거나 이미 시험을 제출했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                window.location.href = 'error.html?message=' + encodeURIComponent('시험 자격 확인 중 오류가 발생했습니다.');
+            }
+        });
+    </script>
+</body>
+</html>

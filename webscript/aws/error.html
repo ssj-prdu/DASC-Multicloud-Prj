@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오류</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        h1 { color: #ff0000; }
+        .error-message { font-size: 18px; color: #333; }
+        .back-link { display: inline-block; margin-top: 20px; padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <h1>오류가 발생했습니다</h1>
+    <p id="errorMessage" class="error-message">죄송합니다. 예기치 못한 오류가 발생했습니다.</p>
+    <a href="main.html" class="back-link" onclick="clearSession()">메인 페이지로 돌아가기</a>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorMessage = urlParams.get('message');
+        if (errorMessage) {
+            document.getElementById('errorMessage').textContent = decodeURIComponent(errorMessage);
+        }
+
+        function clearSession() {
+            sessionStorage.clear();
+        }
+
+        // 뒤로가기 방지
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.go(1);
+        };
+    </script>
+</body>
+</html>
