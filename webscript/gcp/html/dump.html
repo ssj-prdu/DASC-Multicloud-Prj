@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problems</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h2 {
+            color: #333;
+        }
+        .problem-list {
+            list-style: none;
+            padding: 0;
+        }
+        .problem-item {
+            margin-bottom: 10px;
+        }
+        .problem-item a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+        .problem-item a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            margin-top: 20px;
+            display: block;
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h2>Problems</h2>
+    <div id="problem-list">Loading...</div>
+    <a href="main.html" class="back-link">Back to Main Page</a>
+    <script>
+    // Fetch data from PHP script and update HTML
+    fetch('http://34.64.32.113/index.php')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('problem-list').innerHTML = data;
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            document.getElementById('problem-list').innerHTML = 'Failed to load data.';
+        });
+    </script>
+</body>
+</html>

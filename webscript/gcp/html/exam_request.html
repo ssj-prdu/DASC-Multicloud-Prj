@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Exam</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h2 {
+            color: #333;
+        }
+        form {
+            margin-top: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select, button {
+            padding: 10px;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+        .back-link {
+            margin-top: 20px;
+            display: block;
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h2>Request an Exam</h2>
+    <form action="http://34.22.73.173/request_exam.php" method="POST">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <br>
+        <label for="user_name">Name:</label>
+        <input type="text" id="user_name" name="user_name" required>
+        <br>
+        <label for="subject">Subject:</label>
+        <select id="subject" name="exam_code" required>
+            <!-- Options will be populated by JavaScript -->
+        </select>
+        <br>
+        <label for="test-date">Test Date:</label>
+        <input type="date" id="test-date" name="test_date" required>
+        <br>
+        <button type="submit">Request Exam</button>
+    </form>
+    <a href="dashboard.html" class="back-link">Back to Dashboard</a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 날짜 제한 추가
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('test-date').setAttribute('min', today);
+
+            fetch('http://34.22.73.173/get_subjects.php')
+                .then(response => response.json())
+                .then(data => {
+                    const subjectSelect = document.getElementById('subject');
+                    data.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject.exam_code;
+                        option.textContent = `${subject.exam_code} - ${subject.subject_name}`;
+                        subjectSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching subjects:', error));
+        });
+    </script>
+</body>
+</html>
