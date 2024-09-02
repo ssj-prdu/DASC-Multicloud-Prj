@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dasc-pv
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: filestore-sc  # PV와 같은 StorageClass 사용apiVersion: apps/v1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dasc-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rds-deployment
+  template:
+    metadata:
+      labels:
+        app: rds-deployment
+    spec:
+      containers:
+      - name: rds-deployment
+        image: gcr.io/dasc-migration/rds-was
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: "/path/to/mount"  # 컨테이너 내부에서 볼륨이 마운트될 경로
+          name: pvc-demo-vol
+      volumes:
+      - name: pvc-demo-vol
+        persistentVolumeClaim:
+          claimName: dasc-pv
+
