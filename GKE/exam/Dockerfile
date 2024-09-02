@@ -4,4 +4,4 @@ RUN a2enmod rewrite
 RUN echo "display_errors = On" >> /usr/local/etc/php/php.ini
 COPY ./php /var/www/html/
 RUN chown -R www-data:www-data /var/www/html/
-EXPOSE 80 443
+EXPOSE 80
