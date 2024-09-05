@@ -1,4 +1,6 @@
 resource "google_container_cluster" "dasc_cluster" {
+  depends_on = [google_compute_subnetwork.dasc-subnet-main]
+  
   name               = "dasc-cluster-was"
   location           = var.region
 
