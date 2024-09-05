@@ -1,6 +1,6 @@
 resource "google_container_cluster" "dasc_cluster" {
   depends_on = [google_compute_subnetwork.dasc-subnet-main]
-  
+
   name               = "dasc-cluster-was"
   location           = var.region
 
@@ -22,7 +22,7 @@ resource "google_container_cluster" "dasc_cluster" {
     cluster_secondary_range_name  = "pods"
     services_secondary_range_name = "services"
   }
-
+  deletion_protection = false
   network = var.vpc
 }
 
