@@ -7,15 +7,6 @@ variable "region" {
   default = "asia-northeast3"
 }
 
-variable "credentials_file" {
+variable "google_credentials" {
   type = string
-}
-
-variable "network" {
-  type = string
-}
-
-variable "subnetwork" {
-  type = string
-  default = "mainsubnet"
 }
