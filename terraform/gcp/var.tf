@@ -4,9 +4,19 @@ variable "project_id" {
 
 variable "region" {
   type = string
-  default = "asia-northeast3"
 }
 
 variable "google_credentials" {
   type = string
+}
+
+
+variable "vpc" {
+  type = string
+  default = "dasc-vpc-main"
+}
+
+variable "subnet-main" {
+  type = string
+  default = "mainsubnet"
 }
