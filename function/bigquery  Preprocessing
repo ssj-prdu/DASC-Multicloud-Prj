@@ -62,7 +62,7 @@ def load_parquet_to_bigquery(event, context):
 
     return f"Loaded {len(target_blobs)} files into {table_id} in BigQuery", 200
 
-
+###########################
 TXT 파일 
 google-cloud-bigquery==3.10.0
 google-cloud-storage==2.11.0
