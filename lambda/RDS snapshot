@@ -1,0 +1,88 @@
+import boto3
+import time
+import requests
+import json
+
+# 클라이언트 초기화
+rds_client = boto3.client('rds', region_name='ap-northeast-2')
+s3_client = boto3.client('s3')
+
+def lambda_handler(event, context):
+    try:
+        # 설정값
+        db_instance_id = "database-1"
+        s3_bucket_name = "dasc-s3-exam"
+        iam_role_arn = "arn:aws:iam::767398000300:role/service-role/dasc-policy-rds-s3to"
+        kms_key_id = "arn:aws:kms:ap-northeast-2:767398000300:key/0871b52d-3539-44de-a11c-380588acebf6"
+        s3_prefix = "exam_q/"
+
+        # 고정된 스냅샷 식별자 및 고유한 Export Task 식별자 생성
+        snapshot_identifier = "dasc-snapshot"
+        export_task_identifier = f"dasc-snapshot-task-{int(time.time())}"  # 고유한 식별자 생성
+        
+        # 기존 스냅샷 및 S3 파일 삭제
+        try:
+            rds_client.delete_db_snapshot(DBSnapshotIdentifier=snapshot_identifier)
+            print(f"Deleted previous RDS snapshot: {snapshot_identifier}")
+        except rds_client.exceptions.DBSnapshotNotFoundFault:
+            print(f"No previous snapshot found with identifier: {snapshot_identifier}")
+
+        # S3의 기존 스냅샷 폴더 삭제
+        try:
+            s3_objects = s3_client.list_objects_v2(Bucket=s3_bucket_name, Prefix=s3_prefix)
+            if 'Contents' in s3_objects:
+                for obj in s3_objects['Contents']:
+                    # "exam_q/"는 삭제하지 않고, 하위 폴더만 삭제
+                    if obj['Key'] != s3_prefix and obj['Key'].startswith(s3_prefix):
+                        s3_client.delete_object(Bucket=s3_bucket_name, Key=obj['Key'])
+                        print(f"Deleted S3 object: {obj['Key']}")
+        except Exception as e:
+            print(f"Error deleting S3 objects: {str(e)}")
+        
+        # 새로운 스냅샷 생성 및 대기
+        print("Starting RDS snapshot creation...")
+        rds_client.create_db_snapshot(
+            DBSnapshotIdentifier=snapshot_identifier,
+            DBInstanceIdentifier=db_instance_id
+        )
+        waiter = rds_client.get_waiter('db_snapshot_completed')
+        waiter.wait(DBSnapshotIdentifier=snapshot_identifier)
+        print("RDS snapshot creation completed.")
+
+        # Export Task 생성 시 특정 테이블 지정
+        print(f"Starting export task with identifier {export_task_identifier}...")
+        export_task = rds_client.start_export_task(
+            ExportTaskIdentifier=export_task_identifier,
+            SourceArn=f"arn:aws:rds:ap-northeast-2:{context.invoked_function_arn.split(':')[4]}:snapshot:{snapshot_identifier}",
+            S3BucketName=s3_bucket_name,
+            IamRoleArn=iam_role_arn,
+            KmsKeyId=kms_key_id,
+            S3Prefix=s3_prefix,
+            ExportOnly=["exam_system.Exam_q"]  # 특정 테이블을 지정합니다.
+        )
+        print(f"Export task started: {export_task}")
+
+        # GCP Cloud Function 호출
+        gcp_function_url = "https://asia-northeast3-dasc-migration.cloudfunctions.net/dasc-transfer-rds-Snapshot"
+        gcp_function_data = {"message": "Start Transfer Job"}  # 필요한 데이터를 전송
+        response = requests.post(gcp_function_url, data=json.dumps(gcp_function_data))
+        print(f"GCP Function response: {response.status_code}, {response.text}")
+
+        return {
+            'statusCode': 200,
+            'body': f"RDS Snapshot {snapshot_identifier} exported to S3 bucket {s3_bucket_name} under {s3_prefix}. GCP Transfer started."
+        }
+    
+    except rds_client.exceptions.ExportTaskAlreadyExistsFault:
+        print(f"Export task with identifier {export_task_identifier} already exists.")
+        return {
+            'statusCode': 409,
+            'body': f"Export task {export_task_identifier} already exists."
+        }
+    
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': f"Error: {str(e)}"
+        }
