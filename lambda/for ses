@@ -1,0 +1,85 @@
+import pymysql
+import boto3
+import os
+
+def lambda_handler(event, context):
+    print("Lambda function started")
+    
+    # RDS 연결 정보 (환경 변수로부터 가져오기)
+    rds_host = 'database-1.ctm8u66282ry.ap-northeast-2.rds.amazonaws.com'
+    username = 'admin'
+    password = 'dkagh1.!'
+    db_name = 'exam_system'
+
+    print("Connecting to RDS")
+    # RDS 연결
+    connection = pymysql.connect(host=rds_host, user=username, password=password, database=db_name)
+    
+    try:
+        with connection.cursor() as cursor:
+            print("Executing SQL query")
+            # 이메일이 발송되지 않은 사용자들의 이메일, 이름, 합격/불합격 정보를 조회
+            sql = """
+                SELECT c.email, c.user_name, c.Pass_Fail
+                FROM `Candidate` c
+                JOIN `User` u ON c.email = u.email
+                WHERE c.Pass_Fail IS NOT NULL AND c.email_sent = 0
+            """
+            cursor.execute(sql)
+            results = cursor.fetchall()
+            
+            for result in results:
+                email = result[0]
+                user_name = result[1]
+                pass_fail = result[2]
+                print(f"User found: {email}, {user_name}, Exam result: {pass_fail}")
+                
+                # 이메일 내용 생성
+                subject = 'Your Exam Results'
+                body = f'Hello {user_name},\n\nYour exam result is: {pass_fail}'
+                
+                print("Sending email via SES")
+                # SES를 통해 이메일 발송
+                ses = boto3.client('ses')
+                try:
+                    response = ses.send_email(
+                        Source='purity2631@gmail.com',  # 검증된 이메일 주소로 설정
+                        Destination={
+                            'ToAddresses': [email]
+                        },
+                        Message={
+                            'Subject': {
+                                'Data': subject
+                            },
+                            'Body': {
+                                'Text': {
+                                    'Data': body
+                                }
+                            }
+                        }
+                    )
+                    print(f"Email sent to {email}")
+
+                    # 이메일 발송 후 해당 사용자의 email_sent 필드를 1로 업데이트
+                    update_sql = "UPDATE `Candidate` SET email_sent = 1 WHERE email = %s"
+                    cursor.execute(update_sql, (email,))
+                    connection.commit()
+
+                except Exception as e:
+                    print(f"Failed to send email: {str(e)}")
+                    return {
+                        'statusCode': 500,
+                        'body': f'Failed to send email to {email}'
+                    }
+            
+            return {
+                'statusCode': 200,
+                'body': 'Emails sent successfully'
+            }
+            
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise e
+    finally:
+        connection.close()
+        print("Connection closed")
