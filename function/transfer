@@ -1,0 +1,84 @@
+from google.oauth2 import service_account
+from googleapiclient import discovery
+import os
+import json
+from datetime import datetime
+
+def transfer_rds_snapshot(request):
+    try:
+        # 환경 변수에서 AWS 키와 GCP 프로젝트 ID 가져오기
+        aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
+        aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+        project_id = os.getenv('PROJECT_ID')
+
+        # 서비스 계정 JSON 키 가져오기
+        service_account_json = os.getenv('SERVICE_ACCOUNT_JSON')
+        credentials = service_account.Credentials.from_service_account_info(
+            json.loads(service_account_json)
+        )
+
+        # Storage Transfer Service API 클라이언트 생성
+        service = discovery.build('storagetransfer', 'v1', credentials=credentials)
+
+        # 현재 시간 계산 (UTC)
+        now = datetime.utcnow()
+
+        # Transfer Job 설정
+        transfer_job = {
+            'description': 'Transfer RDS snapshot from S3 to GCS',
+            'status': 'ENABLED',
+            'projectId': project_id,
+            'transferSpec': {
+                'awsS3DataSource': {
+                    'bucketName': 'dasc-s3-exam',
+                    'awsAccessKey': {
+                        'accessKeyId': aws_access_key_id,
+                        'secretAccessKey': aws_secret_access_key
+                    }
+                },
+                'gcsDataSink': {
+                    'bucketName': 'dasc-s3-exam',  # GCS 버킷 이름
+                    'path': 'AWS-Exam/'  # GCS 목적지 경로
+                },
+                'objectConditions': {
+                    'includePrefixes': [
+                        'exam_q/'  # AWS S3 소스 경로
+                    ]
+                },
+                'transferOptions': {
+                    'overwriteObjectsAlreadyExistingInSink': True
+                }
+            },
+            'schedule': {
+                'scheduleStartDate': {
+                    'year': now.year,
+                    'month': now.month,
+                    'day': now.day
+                },
+                'scheduleEndDate': {
+                    'year': now.year,
+                    'month': now.month,
+                    'day': now.day
+                },
+                'startTimeOfDay': {
+                    'hours': now.hour,
+                    'minutes': (now.minute + 10) % 60  # 현재 시간 기준 10분 후에 시작
+                }
+            }
+        }
+
+        # Transfer Job 생성 및 실행
+        result = service.transferJobs().create(body=transfer_job).execute()
+        print(f'Transfer Job Created: {result}')
+        return f'Transfer Job Created: {result}'
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return f'Error: {str(e)}'
+
+#########################################
+txt 파일 functions-framework==3.*
+google-auth==2.14.1
+google-auth-oauthlib==0.5.3
+google-auth-httplib2==0.1.0
+google-api-python-client==2.50.0
