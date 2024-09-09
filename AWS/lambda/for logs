@@ -1,1 +1,85 @@
+import boto3
+import gzip
+import json
+from datatime import datatime
 
+# S3와 cloudwatch logs 클라이언트를 초기화
+s3_client = boto3.client(’s3’)
+logs_client = boto3.client(‘logs’)
+
+# 로그 그룹과 버킷 설정
+log_group_name = ‘/aws/lambda/dasc-lambda-check-examid’
+bucket_name = ‘dasc-s3-logs’
+log_folder_prefix = ‘dasc-waslambda-logs-folder/’
+
+def lambda_handler(event, content):
+	next_token = None
+		all_logs_data = “”
+		
+		while True:
+				# nextToken이 있는 경우와 없는 경우의 처리
+				if next_token:
+					response = logs_client.describe_log_streams(
+						logGroupName=log_group_name,
+						orderBy=‘LastEventTime’,
+						descending=True,
+						nextToken=next_token
+					)
+				else:
+					response  = logs_client.describe_log_streams(
+						logGroupName=log_group_name,
+						orderBy=‘LastEventTime’,
+						descending=True
+					)
+				log_streams = response.get(‘logStreams’ [])
+				next_token = response.get(‘nextToken’, None)
+				
+for  log_stream in log_streams:
+	log_stream_name = log_stream[‘logStreamName’]
+	next_forward_token = None
+	
+	while True:
+			if next_forward_token:
+				logs = logs_client.get_log_events(
+					logGroupName=log_group_name,
+					logStreamName=log_stream_name,
+					nextToken=next_forward_token
+				)
+			else:
+				logs = logs_client.get_log_events(
+					logGroupName=log_group_name,
+					logStreamName=log_stream_name
+				)
+			# 모든 로그 메시지를 수집
+			for event in logs[‘events’]:
+				message = event[‘message’]
+				all_logs_data += message + ‘\n’
+				
+			# 다음 토큰이 없으면 로그 이벤트를 다 가져온 것
+			next_forward_token = logs.get(‘nextForwardToken’)
+			if not next_forward_token or next_forward_token == logs.get(‘nextBackwardToken’):
+				break
+				
+# 다음 토큰이 없으면 모든 로그 스트림을 다 가져온 것
+if not next_token:
+	break
+
+if all_logs_data:
+	# 모든 로그 데이터를 gzip으로 압축
+	gzipped_data = gzip.compress(all_logs_data.encode(‘utf-8’))
+			
+	# 현재 시간에 따라 파일 이름을 생성합니다.
+	timestamp = datatime.now().strftime(‘%Y-%m-%d_%H-%M-%S’)
+	file_name = f”{log_folder_prefix}logs_{timestamp}.json.gz”
+			
+	#압축된 로그 데이터를 S3에 업로드합니다.
+	s3_client.put_object(
+			Bucket=bucket_name,
+			Key=file_name,
+			Body=gzipped_data
+		)
+			
+return {
+	‘statusCode’: 200,
+	‘body’: f’Successfully uploaded logs to {bucket_name}/{file_name}’
+}
