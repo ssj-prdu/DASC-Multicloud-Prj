@@ -1,1 +1,195 @@
+import json
+import pymysql
+import os
+import random
+
+# 환경 변수에서 설정 가져오기
+rds_host = os.environ['RDS_HOST']
+name = os.environ['DB_USER']
+password = os.environ['DB_PASSWORD']
+db_name = os.environ['DB_NAME']
+
+def get_db_connection():
+    return pymysql.connect(
+        host=rds_host,
+        user=name,
+        passwd=password,
+        db=db_name,
+        connect_timeout=5,
+        cursorclass=pymysql.cursors.DictCursor
+    )
+
+def lambda_handler(event, context):
+    # 프리플라이트 요청 처리
+    if event.get('httpMethod') == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
+        }
+
+    # 요청 본문 파싱
+    try:
+        body = json.loads(event.get('body', '{}'))
+    except json.JSONDecodeError:
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            'body': json.dumps({'message': 'Invalid JSON'})
+        }
+
+    function_name = body.get('functionName')
+    params = body.get('params', {})
+
+    if function_name is None:
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            'body': json.dumps({'message': 'functionName is required'})
+        }
+
+    conn = get_db_connection()
+    try:
+        if function_name == 'verifyExamEligibility':
+            result = verify_exam_eligibility(conn, params)
+        elif function_name == 'getExamQuestions':
+            result = get_exam_questions(conn, params)
+        elif function_name == 'submitExam':
+            result = submit_exam(conn, params)
+        elif function_name == 'getExamResult':
+            result = get_exam_result(conn, params)
+        else:
+            raise ValueError('Unknown function')
+
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            'body': json.dumps(result)
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            'body': json.dumps({'message': str(e)})
+        }
+    finally:
+        conn.close()
+
+def verify_exam_eligibility(conn, params):
+    exam_id = params.get('exam_id')
+    email = params.get('email')
+    if not exam_id or not email:
+        raise ValueError('exam_id and email are required')
+
+    with conn.cursor() as cur:
+        # 응시 자격 확인 및 이미 제출한 시험인지 확인
+        query = """
+        SELECT 1 FROM Candidate 
+        WHERE exam_id = %s AND email = %s AND (score IS NULL OR Pass_Fail IS NULL)
+        """
+        cur.execute(query, (exam_id, email))
+        result = cur.fetchone()
+
+    return {'eligible': result is not None}
+
+def get_exam_questions(conn, params):
+    exam_id = params.get('exam_id')
+    if not exam_id:
+        raise ValueError('exam_id is required')
+
+    with conn.cursor() as cur:
+        # Get exam_code from Candidate table
+        cur.execute("SELECT exam_code FROM Candidate WHERE exam_id = %s", (exam_id,))
+        candidate = cur.fetchone()
+        if not candidate:
+            raise ValueError('Invalid exam_id')
+        
+        exam_code = candidate['exam_code']
+
+        # Get all questions
+        query = """
+        SELECT question_id, content, A, B, C, D
+        FROM Exam_q
+        WHERE exam_code = %s
+        """
+        cur.execute(query, (exam_code,))
+        all_questions = cur.fetchall()
+
+    if not all_questions:
+        raise ValueError('No questions found for this exam')
+
+    # Randomly select 20 questions
+    selected_questions = random.sample(all_questions, min(20, len(all_questions)))
+
+    return {'questions': selected_questions}
+
+def submit_exam(conn, params):
+    exam_id = params.get('exam_id')
+    answers = params.get('answers')
+    if not exam_id or not answers:
+        raise ValueError('exam_id and answers are required')
+
+    with conn.cursor() as cur:
+        # Check if exam has already been submitted
+        cur.execute("SELECT score FROM Candidate WHERE exam_id = %s", (exam_id,))
+        existing_score = cur.fetchone()
+        if existing_score and existing_score['score'] is not None:
+            raise ValueError('This exam has already been submitted')
+
+        # Get exam_code
+        cur.execute("SELECT exam_code FROM Candidate WHERE exam_id = %s", (exam_id,))
+        candidate = cur.fetchone()
+        if not candidate:
+            raise ValueError('Invalid exam_id')
+        
+        exam_code = candidate['exam_code']
+
+        # Get correct answers
+        cur.execute("SELECT question_id, answer FROM Exam_q WHERE exam_code = %s", (exam_code,))
+        correct_answers = {row['question_id']: row['answer'] for row in cur.fetchall()}
+
+        if len(answers) > len(correct_answers):
+            raise ValueError('답변 수가 문제 수보다 많습니다')
+
+        # 채점
+        score = sum(5 for q_id, answer in answers.items() if correct_answers.get(q_id) == answer)
+        pass_fail = '합격' if score >= 60 else '불합격'
+
+        # 결과 저장
+        cur.execute("UPDATE Candidate SET score = %s, Pass_Fail = %s WHERE exam_id = %s", 
+                    (score, pass_fail, exam_id))
+        conn.commit()
+
+    return {'submitted': True, 'score': score, 'passFail': pass_fail}
+
+def get_exam_result(conn, params):
+    exam_id = params.get('exam_id')
+    email = params.get('email')
+    if not exam_id or not email:
+        raise ValueError('exam_id and email are required')
+
+    with conn.cursor() as cur:
+        cur.execute("SELECT score, Pass_Fail FROM Candidate WHERE exam_id = %s AND email = %s", (exam_id, email))
+        result = cur.fetchone()
+
+    if not result or result['score'] is None:
+        raise ValueError('결과를 찾을 수 없습니다')
+
+    return {'score': result['score'], 'passFail': result['Pass_Fail']}
+
 
