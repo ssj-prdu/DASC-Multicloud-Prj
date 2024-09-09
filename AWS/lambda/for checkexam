@@ -2,6 +2,9 @@ import json
 import pymysql
 import os
 import random
+import boto3
+import uuid
+from datetime import datetime, timedelta
 
 # 환경 변수에서 설정 가져오기
 rds_host = os.environ['RDS_HOST']
@@ -18,6 +21,44 @@ def get_db_connection():
         connect_timeout=5,
         cursorclass=pymysql.cursors.DictCursor
     )
+
+def create_or_update_session(conn, email):
+    with conn.cursor() as cur:
+        session_id = str(uuid.uuid4())
+        current_time = datetime.utcnow()
+        
+        # 기존 세션 삭제
+        cur.execute("DELETE FROM active_sessions WHERE user_id = %s", (email,))
+        
+        # 새 세션 생성
+        cur.execute("INSERT INTO active_sessions (session_id, user_id, last_activity) VALUES (%s, %s, %s)",
+                    (session_id, email, current_time))
+        conn.commit()
+    return session_id
+
+def update_session_activity(conn, session_id):
+    with conn.cursor() as cur:
+        current_time = datetime.utcnow()
+        cur.execute("UPDATE active_sessions SET last_activity = %s WHERE session_id = %s",
+                    (current_time, session_id))
+        conn.commit()
+
+def remove_session(conn, session_id):
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM active_sessions WHERE session_id = %s", (session_id,))
+        conn.commit()
+
+def cleanup_expired_sessions(conn):
+    with conn.cursor() as cur:
+        expire_time = datetime.utcnow() - timedelta(minutes=30)
+        cur.execute("DELETE FROM active_sessions WHERE last_activity < %s", (expire_time,))
+        conn.commit()
+
+def get_active_users_count(conn):
+    with conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) as count FROM active_sessions")
+        result = cur.fetchone()
+        return result['count']
 
 def lambda_handler(event, context):
     # 프리플라이트 요청 처리
@@ -59,16 +100,39 @@ def lambda_handler(event, context):
 
     conn = get_db_connection()
     try:
+        # 만료된 세션 정리
+        cleanup_expired_sessions(conn)
+
         if function_name == 'verifyExamEligibility':
             result = verify_exam_eligibility(conn, params)
+            # 세션 생성 또는 업데이트
+            session_id = create_or_update_session(conn, params.get('email'))
+            result['session_id'] = session_id
         elif function_name == 'getExamQuestions':
             result = get_exam_questions(conn, params)
+            # 세션 활동 업데이트
+            update_session_activity(conn, params.get('session_id'))
         elif function_name == 'submitExam':
             result = submit_exam(conn, params)
         elif function_name == 'getExamResult':
             result = get_exam_result(conn, params)
+        elif function_name == 'getActiveUsersCount':
+            result = {'active_users': get_active_users_count(conn)}
         else:
             raise ValueError('Unknown function')
+
+        # CloudWatch에 현재 활성 사용자 수 메트릭 전송
+        cloudwatch = boto3.client('cloudwatch')
+        cloudwatch.put_metric_data(
+            Namespace='CustomMetrics',
+            MetricData=[
+                {
+                    'MetricName': 'CurrentActiveUsers',
+                    'Value': get_active_users_count(conn),
+                    'Unit': 'Count'
+                },
+            ]
+        )
 
         return {
             'statusCode': 200,
@@ -141,8 +205,9 @@ def get_exam_questions(conn, params):
 def submit_exam(conn, params):
     exam_id = params.get('exam_id')
     answers = params.get('answers')
-    if not exam_id or not answers:
-        raise ValueError('exam_id and answers are required')
+    session_id = params.get('session_id')
+    if not exam_id or not answers or not session_id:
+        raise ValueError('exam_id, answers, and session_id are required')
 
     with conn.cursor() as cur:
         # Check if exam has already been submitted
@@ -174,6 +239,9 @@ def submit_exam(conn, params):
         cur.execute("UPDATE Candidate SET score = %s, Pass_Fail = %s WHERE exam_id = %s", 
                     (score, pass_fail, exam_id))
         conn.commit()
+
+        # 세션 제거
+        remove_session(conn, session_id)
 
     return {'submitted': True, 'score': score, 'passFail': pass_fail}
 
