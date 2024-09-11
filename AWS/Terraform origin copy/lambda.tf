@@ -78,8 +78,7 @@ module "ses" {
     "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
     "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
     "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
-    "arn:aws:iam::aws:policy/AmazonSESFullAccess",
-    "arn:aws:iam::aws:policy/service-role/AWSLambda_EventBridgePolicy"
+    "arn:aws:iam::aws:policy/AmazonSESFullAccess"
   ]
 
   env_vars = {
