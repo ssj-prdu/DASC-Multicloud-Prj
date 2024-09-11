@@ -1,4 +1,4 @@
-################## Lambda 함수 생성 ##################
+################## Lambda module ##################
 resource "aws_lambda_function" "lambda" {
   function_name = "dasc-lambda-${var.prefix}"
   handler       = "index.handler"
