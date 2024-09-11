@@ -31,9 +31,9 @@ resource "aws_route53_record" "cert_record" {
   depends_on = [ aws_route53_zone.dasc_zone ]
 }
 
-resource "aws_acm_certificate_validation" "dasc_cert_validation" {
-  certificate_arn         = aws_acm_certificate.acm.arn
-  validation_record_fqdns = [for record in aws_route53_record.cert_record : record.fqdn]
-}
+# resource "aws_acm_certificate_validation" "dasc_cert_validation" {
+#   certificate_arn         = aws_acm_certificate.acm.arn
+#   validation_record_fqdns = [for record in aws_route53_record.cert_record : record.fqdn]
+# }
 
 ##### 이거 하고 수동으로 Create record in Route53 눌러줬음 ######
