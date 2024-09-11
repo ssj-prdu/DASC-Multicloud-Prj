@@ -1,5 +1,5 @@
 ######################### exam check ###########################
-module "lambda" {
+module "examcheck" {
   prefix  = "examcheck"
   source  = "./lambda_infra"
   runtime = "python3.9"
@@ -22,7 +22,7 @@ module "lambda" {
 }
 
 ######################### logs ###########################
-module "lambda" {
+module "logs" {
   prefix  = "logs"
   source  = "./lambda_infra"
   runtime = "python3.9"
@@ -43,7 +43,7 @@ module "lambda" {
 }
 
 ######################### rdssnapshot ###########################
-module "lambda" {
+module "rdssnapshot" {
   prefix  = "rdssnapshot"
   source  = "./lambda_infra"
   runtime = "python3.9"
