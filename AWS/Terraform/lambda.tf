@@ -20,7 +20,6 @@ module "examcheck" {
     # DB_PASSWORD = var.db_password
   }
 }
-
 ######################### logs ###########################
 module "logs" {
   prefix  = "logs"
@@ -41,7 +40,6 @@ module "logs" {
   env_vars = {
   }
 }
-
 ######################### rdssnapshot ###########################
 module "rdssnapshot" {
   prefix  = "rdssnapshot"
@@ -63,7 +61,6 @@ module "rdssnapshot" {
     # DB_PASSWORD = var.db_password
   }
 }
-
 ######################### SES ###########################
 module "ses" {
   prefix  = "lambda-examcheck"
